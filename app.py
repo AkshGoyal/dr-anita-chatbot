@@ -147,25 +147,54 @@ Intent:
 
 # --- Core Logic for the Chatbot ---
 
-# --- GLUE CODE: Reconstruct the heavy file ---
+# --- SMART GLUE CODE: Reconstruct the heavy file ---
 def reconstruct_database():
-    target_path = "faiss_index/index.faiss"
-    if not os.path.exists(target_path):
-        # Only reconstruct if the file is missing
-        print("Reconstructing database from parts...")
-        with open(target_path, "wb") as output_file:
-            part_num = 0
-            while True:
-                part_path = f"{target_path}.part{part_num}"
-                if not os.path.exists(part_path):
-                    break
-                with open(part_path, "rb") as part_file:
-                    output_file.write(part_file.read())
-                part_num += 1
-        print("Database reconstructed successfully!")
+    # 1. Define where we want the final file to be
+    output_dir = "faiss_index"
+    output_file = os.path.join(output_dir, "index.faiss")
+
+    # 2. Create the directory if it doesn't exist (Fixes your error)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    # 3. Check if we already have the file
+    if os.path.exists(output_file):
+        print("Database already exists. Skipping reconstruction.")
+        return
+
+    # 4. Find where the parts are (Handle root upload vs folder upload)
+    part_prefix = "index.faiss.part"
+    # Check inside faiss_index folder first
+    if os.path.exists(os.path.join(output_dir, f"{part_prefix}0")):
+        source_dir = output_dir
+    # Check in root folder
+    elif os.path.exists(f"{part_prefix}0"):
+        source_dir = "."
+    else:
+        print("ERROR: Could not find database parts in 'faiss_index/' or root.")
+        return
+
+    print(f"Reconstructing database from parts found in '{source_dir}'...")
+    
+    # 5. Glue the parts together
+    with open(output_file, "wb") as outfile:
+        part_num = 0
+        while True:
+            # Look for part files in the detected source directory
+            part_path = os.path.join(source_dir, f"{part_prefix}{part_num}")
+            
+            if not os.path.exists(part_path):
+                break
+                
+            with open(part_path, "rb") as partfile:
+                outfile.write(partfile.read())
+            part_num += 1
+            
+    print(f"Success! Database reconstructed at {output_file}")
 
 # Run this immediately when app starts
 reconstruct_database()
+# ---------------------------------------------
 # ---------------------------------------------
 
 @st.cache_resource
