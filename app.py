@@ -2,15 +2,15 @@ import streamlit as st
 import os
 from dotenv import load_dotenv
 
-# --- UPDATED IMPORTS FOR NEW LANGCHAIN ---
+# --- STABLE IMPORTS (Compatible with langchain==0.1.20) ---
+# These are the specific import paths required for the older chain logic
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain_community.vectorstores import FAISS
+from langchain.prompts import PromptTemplate
 from langchain.chains import ConversationalRetrievalChain, LLMChain
 from langchain.memory import ConversationBufferMemory
-
-# These moved to "langchain_core"
-from langchain_core.prompts import PromptTemplate
-from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
+from langchain.schema import SystemMessage, HumanMessage, AIMessage
+# ---------------------------------------------------------
 
 # Load environment variables from .env file
 load_dotenv()
@@ -74,7 +74,6 @@ st.markdown("""
 # --- Prompts ---
 
 # REVISED Dr. Anita Schott Prompt for RAG (Knowledge Queries)
-# This prompt now includes the MANDATORY TRIAGE LOOP
 DR_ANITA_SCHOTT_PROMPT = """
 You are Dr. Anita Schott, a pediatric infectious disease specialist and immunization expert with over 20 years of clinical experience.
 Your identity is Dr. Anita Schott. You will always speak in the first person ("I," "my") as a real healthcare professional would.
@@ -148,27 +147,27 @@ Intent:
 
 # --- Core Logic for the Chatbot ---
 
-import os
-
-# --- PASTE THIS AT THE TOP OF app.py ---
-def reconstruct_faiss():
-    # Only reconstruct if the file doesn't exist yet
-    if not os.path.exists("faiss_index/index.faiss"):
+# --- GLUE CODE: Reconstruct the heavy file ---
+def reconstruct_database():
+    target_path = "faiss_index/index.faiss"
+    if not os.path.exists(target_path):
+        # Only reconstruct if the file is missing
         print("Reconstructing database from parts...")
-        with open("faiss_index/index.faiss", "wb") as output_file:
+        with open(target_path, "wb") as output_file:
             part_num = 0
             while True:
-                part_path = f"faiss_index/index.faiss.part{part_num}"
+                part_path = f"{target_path}.part{part_num}"
                 if not os.path.exists(part_path):
                     break
                 with open(part_path, "rb") as part_file:
                     output_file.write(part_file.read())
                 part_num += 1
-        print("Reconstruction complete!")
+        print("Database reconstructed successfully!")
 
 # Run this immediately when app starts
-reconstruct_faiss()
-# ---------------------------------------
+reconstruct_database()
+# ---------------------------------------------
+
 @st.cache_resource
 def load_knowledge_base():
     FAISS_INDEX_PATH = "faiss_index"
