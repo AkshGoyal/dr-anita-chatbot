@@ -15,6 +15,11 @@ from langchain.schema import SystemMessage, HumanMessage, AIMessage
 # Load environment variables from .env file
 load_dotenv()
 
+if "OPENAI_API_KEY" in st.secrets:
+    os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
+else:
+    st.error("🚨 OpenAI API Key is missing! Please add it to the 'Secrets' tab.")
+    st.stop()
 # --- App Configuration & Styling ---
 st.set_page_config(page_title="Dr. Anita Schott - AI Medical Expert", layout="wide")
 
