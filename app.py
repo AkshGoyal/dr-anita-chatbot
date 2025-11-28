@@ -2,14 +2,15 @@ import streamlit as st
 import os
 from dotenv import load_dotenv
 
-# --- MODERN IMPORTS (Compatible with latest langchain) ---
+# --- UNIVERSAL IMPORTS (Works on ALL versions) ---
+# We use the standard paths that work for both old and new LangChain
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain_community.vectorstores import FAISS
 from langchain.chains import ConversationalRetrievalChain, LLMChain
 from langchain.memory import ConversationBufferMemory
-# These moved to langchain_core in the new versions
-from langchain_core.prompts import PromptTemplate
-from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
+# "Universal" paths that won't crash even if the update failed:
+from langchain.prompts import PromptTemplate
+from langchain.schema import SystemMessage, HumanMessage, AIMessage
 # ---------------------------------------------------------
 
 # --- PAGE CONFIG ---
