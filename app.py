@@ -15,11 +15,13 @@ from langchain.schema import SystemMessage, HumanMessage, AIMessage
 # Load environment variables from .env file
 load_dotenv()
 
+# --- CRITICAL: Load API Key from Streamlit Secrets ---
 if "OPENAI_API_KEY" in st.secrets:
     os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
 else:
     st.error("🚨 OpenAI API Key is missing! Please add it to the 'Secrets' tab.")
     st.stop()
+
 # --- App Configuration & Styling ---
 st.set_page_config(page_title="Dr. Anita Schott - AI Medical Expert", layout="wide")
 
@@ -158,7 +160,7 @@ def reconstruct_database():
     output_dir = "faiss_index"
     output_file = os.path.join(output_dir, "index.faiss")
 
-    # 2. Create the directory if it doesn't exist (Fixes your error)
+    # 2. Create the directory if it doesn't exist
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
@@ -200,7 +202,7 @@ def reconstruct_database():
 # Run this immediately when app starts
 reconstruct_database()
 # ---------------------------------------------
-# ---------------------------------------------
+
 
 @st.cache_resource
 def load_knowledge_base():
@@ -210,7 +212,8 @@ def load_knowledge_base():
         return None
     try:
         st.sidebar.info("Loading knowledge base...")
-        embeddings = OpenAIEmbeddings()
+        # FIX 1: Explicitly pass the API key here
+        embeddings = OpenAIEmbeddings(openai_api_key=st.secrets["OPENAI_API_KEY"])
         vector_store = FAISS.load_local(FAISS_INDEX_PATH, embeddings, allow_dangerous_deserialization=True)
         st.sidebar.success("Knowledge base loaded successfully!")
         return vector_store
@@ -218,18 +221,27 @@ def load_knowledge_base():
         st.sidebar.error(f"Failed to load knowledge base: {e}")
         return None
 
-# Function to classify user intent (Unchanged)
+# Function to classify user intent
 @st.cache_resource
 def get_intent_classifier():
     """Creates a simple LLM chain to classify the user's intent."""
-    model = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0) # Use a fast, cheap model
+    # FIX 2: Explicitly pass the API key here
+    model = ChatOpenAI(
+        model_name="gpt-3.5-turbo", 
+        temperature=0,
+        openai_api_key=st.secrets["OPENAI_API_KEY"]
+    )
     prompt = PromptTemplate(template=INTENT_CLASSIFICATION_PROMPT, input_variables=["user_input"])
     return LLMChain(llm=model, prompt=prompt)
 
-# UPDATED: Function to create the main RAG chain
+# Function to create the main RAG chain
 def get_conversational_chain(_vector_store, _memory):
-    # Use a consistent, powerful model like gpt-4o for persona consistency
-    model = ChatOpenAI(model_name="gpt-4o", temperature=0.3) 
+    # FIX 3: Explicitly pass the API key here
+    model = ChatOpenAI(
+        model_name="gpt-4o", 
+        temperature=0.3,
+        openai_api_key=st.secrets["OPENAI_API_KEY"]
+    )
     
     qa_prompt = PromptTemplate(
         template=DR_ANITA_SCHOTT_PROMPT, 
@@ -249,13 +261,17 @@ def get_conversational_chain(_vector_store, _memory):
     )
     return chain
 
-# UPDATED: Function to handle conversational queries directly
+# Function to handle conversational queries directly
 def handle_conversational_query(query, memory):
     """
     Handles chitchat by sending the query directly to the LLM with a persona-only prompt.
     """
-    # Use the same powerful model for persona consistency
-    model = ChatOpenAI(model_name="gpt-4o", temperature=0.3)
+    # FIX 4: Explicitly pass the API key here
+    model = ChatOpenAI(
+        model_name="gpt-4o", 
+        temperature=0.3,
+        openai_api_key=st.secrets["OPENAI_API_KEY"]
+    )
 
     # Manually build the prompt with the new persona-only system message
     messages = [SystemMessage(content=DR_ANITA_SCHOTT_PERSONA_ONLY_PROMPT)]
@@ -304,7 +320,7 @@ for message in st.session_state.messages:
     role_class = "user-bubble" if message["role"] == "user" else "assistant-bubble"
     st.markdown(f'<div class="chat-bubble {role_class}">{message["content"]}</div>', unsafe_allow_html=True)
 
-# Main chat handling function with router logic (Unchanged logic)
+# Main chat handling function with router logic
 def handle_chat(prompt):
     st.session_state.messages.append({"role": "user", "content": prompt})
 
@@ -332,7 +348,7 @@ def handle_chat(prompt):
     
     st.rerun()
 
-# Display suggested prompts (Unchanged logic)
+# Display suggested prompts
 if len(st.session_state.get("messages", [])) <= 1 and st.session_state.get("chain"):
     st.markdown("---")
     st.markdown("**Suggested Questions:**")
@@ -345,6 +361,6 @@ if len(st.session_state.get("messages", [])) <= 1 and st.session_state.get("chai
     if cols[2].button(suggested_prompts[2]):
         handle_chat(suggested_prompts[2])
 
-# Handle user input (Unchanged logic)
+# Handle user input
 if prompt := st.chat_input("Ask Dr. Anita Schott a question..."):
     handle_chat(prompt)
