@@ -2,13 +2,16 @@ import streamlit as st
 import os
 from dotenv import load_dotenv
 
-# --- MODERN IMPORTS (Compatible with latest langchain) ---
+# --- IMPORTS (Matched to requirements.txt) ---
+# New OpenAI integration
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+# Community vector store
 from langchain_community.vectorstores import FAISS
+# Chains are found here in langchain v0.2+
 from langchain.chains import ConversationalRetrievalChain, LLMChain
+# Memory
 from langchain.memory import ConversationBufferMemory
-
-# UPDATED: These moved to langchain_core in the new version
+# Prompts and Messages moved to Core
 from langchain_core.prompts import PromptTemplate
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 # ---------------------------------------------------------
