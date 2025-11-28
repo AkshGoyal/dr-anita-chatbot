@@ -2,13 +2,16 @@ import streamlit as st
 import os
 from dotenv import load_dotenv
 
-# --- STABLE IMPORTS (Compatible with langchain==0.1.20) ---
+# --- MODERN IMPORTS (Compatible with latest langchain) ---
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain_community.vectorstores import FAISS
-from langchain.prompts import PromptTemplate
 from langchain.chains import ConversationalRetrievalChain, LLMChain
 from langchain.memory import ConversationBufferMemory
-from langchain.schema import SystemMessage, HumanMessage, AIMessage
+
+# UPDATED: These moved to langchain_core in the new version
+from langchain_core.prompts import PromptTemplate
+from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
+# ---------------------------------------------------------
 
 # --- PAGE CONFIG ---
 st.set_page_config(page_title="Dr. Anita Schott - AI Medical Expert", layout="wide")
